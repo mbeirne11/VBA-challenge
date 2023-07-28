@@ -1,0 +1,98 @@
+Sub insert_ticker()
+Dim current_ws As Worksheet
+Dim ticker_num As Integer
+Dim total As Double
+Dim ticker_inc, ticker_dec, ticker_vol As Integer
+Dim greatest_inc, greatest_dec, greatest_vol As Double
+
+
+'run through each sheet
+For Each current_ws In Worksheets
+    current_ws.Activate
+    ticker_num = 2
+    lastrow = current_ws.Range("A" & ActiveSheet.Rows.Count).End(xlUp).Row
+    'insert ticker name
+    For i = 1 To lastrow
+        If (current_ws.Cells(i, 1) <> current_ws.Cells(i + 1, 1)) Then
+            current_ws.Cells(ticker_num, 9) = current_ws.Cells(i + 1, 1)
+            ticker_num = ticker_num + 1
+        End If
+    Next i
+    ticker_num = 2
+    'insert change value and %
+    For i = 2 To lastrow
+        If (current_ws.Cells(i, 1) <> current_ws.Cells(i + 1, 1)) Then
+            current_ws.Cells(ticker_num - 1, 10) = current_ws.Cells(i, 6) - open_value
+            current_ws.Cells(ticker_num - 1, 11) = current_ws.Cells(ticker_num - 1, 10) / open_value
+        ElseIf (current_ws.Cells(ticker_num, 9) = current_ws.Cells(i, 1)) Then
+            open_value = current_ws.Cells(i, 3)
+            ticker_num = ticker_num + 1
+        End If
+    Next i
+
+    'insert total stock volume
+    ticker_num = 2
+    For i = 2 To lastrow + 1
+        If (current_ws.Cells(ticker_num, 9) = current_ws.Cells(i, 1)) Then
+            total = total + current_ws.Cells(i, 7)
+        Else
+            current_ws.Cells(ticker_num, 12) = total
+            ticker_num = ticker_num + 1
+            total = current_ws.Cells(i, 7)
+        End If
+    Next i
+
+    'insert stats
+
+    lastrow = current_ws.Range("K" & ActiveSheet.Rows.Count).End(xlUp).Row
+
+    greatest_inc = current_ws.Cells(2, 11)
+    greatest_dec = current_ws.Cells(2, 11)
+    greatest_vol = current_ws.Cells(2, 12)
+    For i = 2 To lastrow
+        If (current_ws.Cells(i, 11) > greatest_inc) Then
+            greatest_inc = current_ws.Cells(i, 11)
+            ticker_inc = i
+        End If
+        If (current_ws.Cells(i, 11) < greatest_dec) Then
+            greatest_dec = current_ws.Cells(i, 11)
+            ticker_dec = i
+        End If
+        If (current_ws.Cells(i, 12) > greatest_vol) Then
+            greatest_vol = current_ws.Cells(i, 12)
+            ticker_vol = i
+        End If
+    Next i
+        current_ws.Cells(2, 17) = greatest_inc
+        current_ws.Cells(2, 16) = current_ws.Cells(ticker_inc, 9)
+        current_ws.Cells(3, 17) = greatest_dec
+        current_ws.Cells(3, 16) = current_ws.Cells(ticker_dec, 9)
+        current_ws.Cells(4, 17) = greatest_vol
+        current_ws.Cells(4, 16) = current_ws.Cells(ticker_vol, 9)
+    'change format to yearly change and percent change
+    For i = 2 To lastrow
+        If (current_ws.Cells(i, 10) < 0) Then
+            current_ws.Cells(i, 10).Interior.ColorIndex = 3
+        Else
+            current_ws.Cells(i, 10).Interior.ColorIndex = 4
+        End If
+        current_ws.Cells(i, 11) = FormatPercent(current_ws.Cells(i, 11), 2)
+        
+    Next i
+    'chane format to stats
+    current_ws.Cells(2, 17) = FormatPercent(current_ws.Cells(2, 17), 2)
+    current_ws.Cells(3, 17) = FormatPercent(current_ws.Cells(3, 17), 2)
+    
+    'incert header
+    current_ws.Cells(1, 9) = "Ticker"
+    current_ws.Cells(1, 10) = "Yearly Change"
+    current_ws.Cells(1, 11) = "Percent Change"
+    current_ws.Cells(1, 12) = "Total Stock Volume"
+    current_ws.Cells(1, 16) = "Ticker Symbol"
+    current_ws.Cells(1, 17) = "Value"
+    current_ws.Cells(2, 15) = "Greatest % Increase"
+    current_ws.Cells(3, 15) = "Greatest % Decrease"
+    current_ws.Cells(4, 15) = "Greatest Total Volume"
+Next
+
+End Sub
